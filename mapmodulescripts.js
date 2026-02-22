@@ -129,6 +129,7 @@ var markersonchart = []
 var cities = L.layerGroup(markersonchart);
 var showall = true
 var initialLoad = true
+var activePopupId = null
 $('#sidepanelhighway1').click(function () { showonly('nh-102'); });
 $('#sidepanelhighway2').click(function () { showonly('nh-2'); });
 $('#sidepanelhighway3').click(function () { showonly('nh-37'); });
@@ -141,6 +142,7 @@ function showonly(para) {
     markersonchart.forEach(element => {
         map.removeLayer(element)
     });
+    markersonchart = [];
     vehicles.forEach(element => {
         if (Object.values(element).join(' ').toLowerCase().includes(para.toLowerCase())) {
             if (!(element["lat"] === undefined)) {
@@ -171,17 +173,23 @@ function showonly(para) {
 function updateLocation() {
     if (showall == true) {
         var latlon = []
+        // Remember which popup was open before removing markers
+        markersonchart.forEach(element => {
+            if (element.getPopup() && element.getPopup().isOpen()) {
+                activePopupId = element._vehicleId;
+            }
+        });
         markersonchart.forEach(element => {
             map.removeLayer(element)
         });
+        markersonchart = [];
 
         vehicles.forEach(element => {
             if (!(element["lat"] === undefined)) {
-                console.log(element["lat"], element["long"])
                 latlon.push([element["lat"], element["long"]])
                 var marker = L.marker([element["lat"], element["long"]], { icon: svgIcon }).addTo(map).
                     bindPopup("<b>Name : </b>" + (element["Name"] || "").toUpperCase() + '<br>'
-                        + "<b>Nobile Number : </b>" + (element["MobileNumber"] || "") + '<br>'
+                        + "<b>Mobile Number : </b>" + (element["MobileNumber"] || "") + '<br>'
                         + "<b>Police Station  : </b>" + (element["PoliceStation"] || "") + '<br>'
                         + "<b>Nature of Duty : </b>" + (element["NatureofDuty"] || "") + '<br>'
                         + "<b>Area Allocated : </b>" + (element["AreaAllocated"] || "") + '<br>'
@@ -190,6 +198,10 @@ function updateLocation() {
                         '<br> <a href="history.html?vehicle=' + element["id"] + '">View History</a>' +
                         '<br> <a class="livechat" href="#" data-id="' + element["id"] + '">Live Chat</a>')
                     ;
+                marker._vehicleId = element["id"];
+                if (activePopupId && element["id"] === activePopupId) {
+                    marker.openPopup();
+                }
                 markersonchart.push(marker);
             }
 
